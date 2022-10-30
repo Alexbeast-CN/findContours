@@ -14,7 +14,7 @@
 #define MAP_WIDTH       800
 #define MAP_HEIGHT      500
 #define RESOLUTION      0.05
-#define OBSTABLE_NUM    3
+#define OBSTABLE_NUM    2
 
 // store point from mouse click
 struct MouseParams{
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     auto out_pts = outside_pram.points;
     //    draw polygon from points
     cv::fillConvexPoly(img, out_pts.data(), out_pts.size(), cv::Scalar(1, 1, 1));
-    cv::polylines(img, out_pts, true, cv::Scalar(254,254,254),2);
+    cv::polylines(img, out_pts, true, cv::Scalar(254,254,254),4);
     cv::imshow("Map display", img);
 
     // Select inside polygon points by mouse click
@@ -81,8 +81,8 @@ int main(int argc, char** argv) {
 
         auto in_pts = inside_pram.points;
         //    draw polygon from points
-        cv::fillConvexPoly(img2, in_pts.data(), in_pts.size(), cv::Scalar(1,1,1));
-        cv::polylines(img2, in_pts, true, cv::Scalar(254,254,254),2);
+        cv::fillConvexPoly(img2, in_pts.data(), in_pts.size(), cv::Scalar(254,254,254));
+        // cv::polylines(img2, in_pts, true, cv::Scalar(254,254,254),4);
 //        img2 = inside_pram.img;
         cv::imshow("Map display", img2);
 

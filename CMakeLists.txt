@@ -10,5 +10,7 @@ include_directories(./include)
 file(GLOB SOURCES "src/*.cpp")
 
 add_executable(findContour main.cpp ${SOURCES})
+add_executable(Map_Generator Map_Generator.cpp)
 target_link_libraries(findContour ${OpenCV_LIBS})
+target_link_libraries(Map_Generator ${OpenCV_LIBS})
 

@@ -38,15 +38,17 @@ void FindContours::Display(){
     std::cout << std::endl;
 }
 
-p FindContours::findNeighbor(const p &center, const p &start, bool clock_wise=true){
-    int weight = -1;
-    if (clock_wise) weight = 1;
+// Look for the first non-zero pixel around the current pixel.
+// If there is no non-zero pixel, return (-1, -1).
+p FindContours::findNeighbor(const p &center, const p &start, bool isBoarder=true){
+    int weight = 1;
+    if (!isBoarder) weight = -1;
 
     pList neighbors{p(0, 0), p(0, 1), p(0,2),
                     p(1,2), p(2,2), p(2,1),
                     p(2,0), p(1,0)};
     Mat2i index{{0, 1, 2},
-                {7, 9, 3},
+                {7, 0, 3},
                 {6, 5, 4}};
     int start_ind = index[start.first - center.first + 1]
             [start.second - center.second + 1];
@@ -55,35 +57,33 @@ p FindContours::findNeighbor(const p &center, const p &start, bool clock_wise=tr
         int cur_ind = (start_ind + i*weight + 8) % 8;
         int x = center.first + neighbors[cur_ind].first - 1;
         int y = center.second + neighbors[cur_ind].second - 1;
-        if(grid[x][y] != 0) 
-            return p(x, y);
+        if(grid[x][y] != 0){
+            // std::cout << grid[x][y] << std::endl;
+            return p(x, y);  
+        } 
     }
     return p(-1, -1);
 }
 
-void FindContours::board_follow(const p &center, const p &start){
-    p ij  = center;
-    p ij2 = start;
-    p ij1 = findNeighbor(ij, ij2, true);
-
+void FindContours::board_follow(const p &center, const p &start, bool isBoarder=true){
     int weight = 1;
-    int x = ij1.first;
-    int y = ij1.second;
+    if (!isBoarder) weight = -1;
 
-    if (ij1 == p(-1, -1)){
-        grid[ij.first][ij.second] = -NBD;
+    p end_loop = findNeighbor(center, start, isBoarder);
+
+    if (end_loop == p(-1, -1)){
+        grid[center.first][center.second] = -NBD;
         return;
     }
 
-    ij2 = ij1;
-    p ij3 = ij;
+    p new_center    = center;
+    p neighbor      = end_loop;
+    p new_neighbor  = findNeighbor(new_center, neighbor, !isBoarder);
 
-    for (int k = 0; k < MAX_BODER_NUMBER; k++){
-        // step 3.3
-        p ij4 = findNeighbor(ij3, ij2, false);
-        x = ij3.first;
-        y = ij3.second;
-        if (ij4.first - ij2.first <= 0)
+    while (new_neighbor != p(-1, -1)){
+        int x = new_center.first;
+        int y = new_center.second;
+        if (new_neighbor.first - neighbor.first <= 0)
             weight = -1;
         
         if (grid[x][y] >= 0){
@@ -93,15 +93,16 @@ void FindContours::board_follow(const p &center, const p &start){
                 grid[x][y] = -NBD;
             else if (grid[x][y] == 1 && grid[x][y+1] != 0)
                 grid[x][y] = NBD;
-        }
-        
+        } 
 
-       if (ij4 == ij && ij3 == ij1)
+        
+       if (new_neighbor == center && new_center == end_loop)
             return; 
 
-        ij2 = ij3;
-        ij3 = ij4;
-    }   
+        neighbor        = new_center;
+        new_center      = new_neighbor;
+        new_neighbor    = findNeighbor(new_center, neighbor, !isBoarder);
+    }
 
 }
 
@@ -112,15 +113,18 @@ void FindContours::raster_scan(){
             if (abs(grid[i][j]) > 1)
                 LNBD = abs(grid[i][j]);
 
-            if (grid[i][j] >= 1){
-                if (grid[i][j] == 1 && grid[i][j-1] == 0){
-                    NBD += 1;
-                    board_follow(p(i, j), p(i, j-1));
-                }
-                else if (grid[i][j] > 1 && grid [i][j+1] == 0){
-                    NBD += 1;
-                    board_follow(p(i, j), p(i, j+1));
-                }
+            // find the starting point of the boarder.
+            if (grid[i][j] == 1 && grid[i][j-1] == 0){
+                NBD += 1;
+                // do the board trace.
+                board_follow(p(i, j), p(i, j-1), true);
+                // Display();
+            }
+            // find the starting point of the hole.
+            else if (grid[i][j] >= 1 && grid [i][j+1] == 0){
+                NBD += 1;
+                board_follow(p(i, j), p(i, j+1), true);
+                // Display();
             }
         }
     }

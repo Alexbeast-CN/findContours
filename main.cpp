@@ -1,11 +1,37 @@
-#include "./include/FindContours.h"
-#include "opencv2/opencv.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
+//
+// Created by Daoming Chen 2022/10/24
+// 
 
+#include "./include/FindContours.h"
 #include <fstream>
 #include <sstream>
 #include <cassert>
+
+
+// remember to comment find opencv package in the CMakeLists.txt if turn OPENCVDISPLAY off.
+#define OPENCVDISPLAY TRUE
+
+#if OPENCVDISPLAY == TRUE
+    #include "opencv2/opencv.hpp"
+    #include "opencv2/highgui.hpp"
+    #include "opencv2/imgproc.hpp"
+
+    void MatDisplay(const Mat2i &mat, const std::string &name){
+        int rows = mat.size();
+        int cols = mat[0].size();
+        cv::Mat mat_cv(rows, cols, CV_8UC1);
+        for (int i = 0; i < rows; i++)
+            for (int j = 0; j < cols; j++)
+                mat_cv.at<uchar>(i, j) = abs(mat[i][j])*60;
+
+        cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
+        cv::imshow(name, mat_cv);
+        std::cout << "Press any key to continue..." << std::endl;
+        cv::waitKey();
+        // save the image into outputs
+        cv::imwrite("../outputs/" + name + ".jpg", mat_cv);
+    }
+#endif
 
 Mat2i dataReader(std::string &filename){
     std::ifstream map_f;
@@ -45,7 +71,6 @@ Mat2i dataReader(std::string &filename){
         ss >> name;
         if (name == "state_grid:"){
             while(getline(map_f, str)){
-                std::cout << str.size() << std::endl;
                 ss = std::stringstream(str);
                 while (ss >> state){
                     if (state > 250)
@@ -62,20 +87,10 @@ Mat2i dataReader(std::string &filename){
 
 }
 
-void MatDisplay(const Mat2i &mat, const std::string &name){
-    int rows = mat.size();
-    int cols = mat[0].size();
-    cv::Mat mat_cv(rows, cols, CV_8UC1);
-    for (int i = 0; i < rows; i++)
-        for (int j = 0; j < cols; j++)
-            mat_cv.at<uchar>(i, j) = abs(mat[i][j])*60;
-
-    cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
-    cv::imshow(name, mat_cv);
-    cv::waitKey(0);
-}
-
 int main(int, char**) {
+    FindContours fc;
+
+    //// A small mat for test.
     // Mat2i mat{{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
     //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
     //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
@@ -89,17 +104,34 @@ int main(int, char**) {
     //           {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
     //           {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
     //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+    //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
     //           {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
-  
-    std::string filename = "../data/CPP_origin_map.txt";
+
+    // Mat2i mat{{1,1,1,1,1,1,1},
+    //           {1,1,1,1,1,1,1},
+    //           {1,1,0,0,0,1,1},
+    //           {0,1,1,0,0,1,1},
+    //           {0,0,1,1,0,1,1},
+    //           {0,0,0,1,1,1,1},
+    //           {0,0,0,0,1,1,1}};
+
+    // fc.mapLoader(mat);
+
+
+    std::string name        = "poly";
+    std::string filename    = "../data/" + name + ".txt";
+
     Mat2i mat = dataReader(filename);
-    FindContours fc;
     fc.mapLoader(mat);
-    MatDisplay(mat, "origin");
+    MatDisplay(mat, name + "_origin");
+
+    //// if the image is smaller than 30*30, 
+    //// you can display it in the terminal with the following 'Display()' function.
     // fc.Display();
+
     fc.raster_scan();
     Mat2i mat2 = fc.getGrid();
-    MatDisplay(mat2, "contour");
+    MatDisplay(mat2, name + "_contour");
     // fc.Display();
     return 0;
 }

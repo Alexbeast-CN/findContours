@@ -12,10 +12,10 @@ typedef unsigned char                   uint8;
 class FindContours
 {
 private:
-    Mat2i grid{{1,1,1,1,1,1,1,0,0},
-               {1,0,0,1,0,0,1,0,1},
-               {1,0,0,1,0,0,1,0,0},
-               {1,1,1,1,1,1,1,0,0}};
+    Mat2i grid{{0,1,1,1,1,1,1,1,0},
+               {0,1,0,0,1,0,0,1,0},
+               {0,1,0,0,1,0,0,1,0},
+               {0,1,1,1,1,1,1,1,0}};
     
     int pad_size = 1;
     int rows = grid.size();
@@ -34,7 +34,7 @@ private:
 
 public:
     FindContours(/* args */){
-        // grid;
+        reset();
     };
 
     void pad(int pad_size);
@@ -50,9 +50,9 @@ public:
 
     void Display();
     
-    p findNeighbor(const p &center, const p &start, bool clock_wise);
+    p findNeighbor(const p &center, const p &start, bool isBoarder);
 
-    void board_follow(const p &center, const p &start);
+    void board_follow(const p &center, const p &start, bool isBoarder);
 
     void raster_scan();
 
