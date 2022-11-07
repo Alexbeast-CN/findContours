@@ -1,0 +1,15 @@
+*.json
+toolchainRK.cmake
+*.vs
+out/
+output/
+build/
+_build/
+version_info.h
+*.vscode
+.vscode/
+cmake-build-release/
+cmake-build-release-mingw/
+cmake-build-debug/
+cmake-build-release-wsl/
+.idea/

@@ -11,10 +11,12 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
-#define MAP_WIDTH       800
-#define MAP_HEIGHT      500
+#define MAP_WIDTH       500
+#define MAP_HEIGHT      300
 #define RESOLUTION      0.05
-#define OBSTABLE_NUM    2
+#define OUTER_POLYGON   2
+#define OBSTABLE_NUM    3
+
 
 // store point from mouse click
 struct MouseParams{
@@ -54,24 +56,31 @@ int main(int argc, char** argv) {
     // Select outside polygon points by mouse click
     cv::namedWindow("Map display");
     cv::imshow("Map display", img);
-    std::cout << "Select outside polygon points by mouse click, \nconfirm selection by any keyboard input" << std::endl;
-    MouseParams outside_pram(img);
+    std::cout << "You can create " << OUTER_POLYGON << " polygons" << std::endl;
+    std::cout << "Please select outside polygon points by mouse click, \nconfirm selection by any keyboard input" << std::endl;
 
-    cv::setMouseCallback("Map display", onMouseHandle, (void*)&(outside_pram));
-    cv::waitKey();
-    std::cout << "Press a key to continue..." << std::endl;
-    // std::cout << std::endl;
+    std::vector<std::vector<cv::Point>> outer_polygons;
 
-    auto out_pts = outside_pram.points;
-    //    draw polygon from points
-    cv::fillConvexPoly(img, out_pts.data(), out_pts.size(), cv::Scalar(1, 1, 1));
-    cv::polylines(img, out_pts, true, cv::Scalar(254,254,254),4);
-    cv::imshow("Map display", img);
+    for (int i = 0; i < OUTER_POLYGON; i++){
+        MouseParams outside_pram(img);
+        std::cout << std::endl << "Now please create polygon # " << i+1 << std::endl;
+        cv::setMouseCallback("Map display", onMouseHandle, (void*)&(outside_pram));
+        cv::waitKey();
+        std::cout << "Press a key to continue..." << std::endl;
+
+        auto out_pts = outside_pram.points;
+        //    draw polygon from points
+        cv::fillConvexPoly(img, out_pts.data(), out_pts.size(), cv::Scalar(1, 1, 1));
+        cv::polylines(img, out_pts, true, cv::Scalar(254,254,254),4);
+        cv::imshow("Map display", img);
+        outer_polygons.push_back(out_pts);
+    }
+    
 
     // Select inside polygon points by mouse click
     cv::Mat img2 = img.clone();
     std::cout << "You can create " << OBSTABLE_NUM << " obstacles" << std::endl;
-    std::cout << std::endl << "Select polygon points by mouse click, \nconfirm selection by any keyboard input" << std::endl;
+    std::cout << std::endl << "Please select polygon points by mouse click, \nconfirm selection by any keyboard input" << std::endl;
 
     for (int i = 0; i < OBSTABLE_NUM; i++){
         MouseParams inside_pram(img2);
@@ -123,12 +132,14 @@ int main(int argc, char** argv) {
 
     // save the outside polygon points as region identifier
     std::ofstream outfile2;
+    int n = outer_polygons.size();
     outfile2.open(filename+"_regions.txt");
-    outfile2 << "Regions: 1" << std::endl;
-    outfile2<< "Region1: " << out_pts.size()*2;
-    for (auto pt : out_pts) {
+    outfile2 << "Regions: " << n << std::endl;
+    for (auto &out_pts : outer_polygons){
+        outfile2<< "Region1: " << out_pts.size()*2;
+        for (auto pt : out_pts)
             outfile2 << " " << (pt.x - origin_pt.x)*RESOLUTION << " " << (origin_pt.y - pt.y)*RESOLUTION;
     }
-
+        
     return 0;
 }

@@ -40,9 +40,9 @@ void FindContours::Display(){
 
 // Look for the first non-zero pixel around the current pixel.
 // If there is no non-zero pixel, return (-1, -1).
-p FindContours::findNeighbor(const p &center, const p &start, bool isBoarder=true){
+p FindContours::findNeighbor(const p &center, const p &start, bool ClockWise=true){
     int weight = 1;
-    if (!isBoarder) weight = -1;
+    if (!ClockWise) weight = -1;
 
     pList neighbors{p(0, 0), p(0, 1), p(0,2),
                     p(1,2), p(2,2), p(2,1),
@@ -65,11 +65,14 @@ p FindContours::findNeighbor(const p &center, const p &start, bool isBoarder=tru
     return p(-1, -1);
 }
 
-void FindContours::board_follow(const p &center, const p &start, bool isBoarder=true){
-    int weight = 1;
-    if (!isBoarder) weight = -1;
 
-    p end_loop = findNeighbor(center, start, isBoarder);
+// It works but not logically clean.
+/*
+void FindContours::board_follow(const p &center, const p &start, bool ClockWise=true){
+    int weight = 1;
+    if (!ClockWise) weight = -1;
+
+    p end_loop = findNeighbor(center, start, ClockWise);
 
     if (end_loop == p(-1, -1)){
         grid[center.first][center.second] = -NBD;
@@ -78,7 +81,7 @@ void FindContours::board_follow(const p &center, const p &start, bool isBoarder=
 
     p new_center    = center;
     p neighbor      = end_loop;
-    p new_neighbor  = findNeighbor(new_center, neighbor, !isBoarder);
+    p new_neighbor  = findNeighbor(new_center, neighbor, !ClockWise);
 
     while (new_neighbor != p(-1, -1)){
         int x = new_center.first;
@@ -101,32 +104,73 @@ void FindContours::board_follow(const p &center, const p &start, bool isBoarder=
 
         neighbor        = new_center;
         new_center      = new_neighbor;
-        new_neighbor    = findNeighbor(new_center, neighbor, !isBoarder);
+        new_neighbor    = findNeighbor(new_center, neighbor, !ClockWise);
     }
 
+}
+*/
+
+void FindContours::board_follow(const p &center, const p &start, bool ClockWise=true){
+    bool open_polygon = true;
+    std::vector<p> board;
+
+    grid[center.first][center.second] = NBD;
+
+    p new_center    = center;
+    p neighbor      = start;
+    p new_neighbor  = findNeighbor(new_center, neighbor, ClockWise);
+
+    while (new_neighbor != p(-1, -1)){
+        int x = new_center.first;
+        int y = new_center.second;
+        board.push_back(new_center);
+
+        if (new_neighbor == center){
+            for (auto &p : board)
+                grid[p.first][p.second] = NBD;
+            return; 
+        }
+
+        neighbor        = new_center;
+        new_center      = new_neighbor;
+        new_neighbor    = findNeighbor(new_center, neighbor, ClockWise);
+    }
+    
+    if (open_polygon){
+        for (auto &p : board)
+                grid[p.first][p.second] = NBD;
+            return; 
+    }
 }
 
 void FindContours::raster_scan(){
     for (int i = 0; i < rows; i++){
         LNBD = 1;
         for (int j = 0; j < cols; j++){
-            if (abs(grid[i][j]) > 1)
-                LNBD = abs(grid[i][j]);
-
             // find the starting point of the boarder.
             if (grid[i][j] == 1 && grid[i][j-1] == 0){
+                LNBD = NBD;
                 NBD += 1;
-                // do the board trace.
-                board_follow(p(i, j), p(i, j-1), true);
+                std :: cout << "out " << NBD << std::endl;
+                board_follow(p(i, j), p(i, j-1), false);
+                board_type.push_back("out");
                 // Display();
             }
             // find the starting point of the hole.
-            else if (grid[i][j] >= 1 && grid [i][j+1] == 0){
+            else if (grid[i][j] == 1 && grid [i][j+1] == 0){
+                LNBD = NBD;
                 NBD += 1;
+                std :: cout << "in " << NBD << std::endl;
                 board_follow(p(i, j), p(i, j+1), true);
+                board_type.push_back("in");
                 // Display();
             }
         }
+        // TODO: construct pwh.
+        if (board_type[LNBD] == "out" && board_type[NBD] == "in")
+            int a;
+        else if (board_type[LNBD] == "in" && board_type[NBD] == "out")
+            pwh 
     }
     rm_pad(pad_size);    
 }

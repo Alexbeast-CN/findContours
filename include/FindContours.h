@@ -9,6 +9,13 @@ typedef std::vector<p>                  pList;
 typedef std::vector<pList>              pMat;
 typedef unsigned char                   uint8;
 
+
+struct pwh{
+    int                     external_poly;
+    std::vector<pwh>        holes;
+};
+
+
 class FindContours
 {
 private:
@@ -22,13 +29,15 @@ private:
     int cols = grid[0].size();
     int LNBD = 1;
     int NBD = 1;
-    int MAX_BODER_NUMBER;
+    pwh pwh;
+    std::vector<std::string> board_type = {" ", "in"};
+
+
 
     void reset(){
         pad(pad_size);
         LNBD = 1;
         NBD = 1;
-        MAX_BODER_NUMBER = rows*cols;
     }
     
 
@@ -50,9 +59,9 @@ public:
 
     void Display();
     
-    p findNeighbor(const p &center, const p &start, bool isBoarder);
+    p findNeighbor(const p &center, const p &start, bool ClockWise);
 
-    void board_follow(const p &center, const p &start, bool isBoarder);
+    void board_follow(const p &center, const p &start, bool ClockWise);
 
     void raster_scan();
 

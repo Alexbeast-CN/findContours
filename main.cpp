@@ -9,9 +9,9 @@
 
 
 // remember to comment find opencv package in the CMakeLists.txt if turn OPENCVDISPLAY off.
-#define OPENCVDISPLAY TRUE
+// #define OPENCVDISPLAY 
 
-#if OPENCVDISPLAY == TRUE
+#ifdef OPENCVDISPLAY
     #include "opencv2/opencv.hpp"
     #include "opencv2/highgui.hpp"
     #include "opencv2/imgproc.hpp"
@@ -22,7 +22,11 @@
         cv::Mat mat_cv(rows, cols, CV_8UC1);
         for (int i = 0; i < rows; i++)
             for (int j = 0; j < cols; j++)
-                mat_cv.at<uchar>(i, j) = abs(mat[i][j])*60;
+                mat_cv.at<uchar>(i, j) = abs(mat[i][j])*30;
+                // if (mat[i][j] == 1)
+                //     mat_cv.at<uchar>(i, j) = 30;
+                // else if (mat[i][j] > 1)
+                //     mat_cv.at<uchar>(i, j) = 255;
 
         cv::namedWindow(name, cv::WINDOW_KEEPRATIO);
         cv::imshow(name, mat_cv);
@@ -90,48 +94,54 @@ Mat2i dataReader(std::string &filename){
 int main(int, char**) {
     FindContours fc;
 
-    //// A small mat for test.
-    // Mat2i mat{{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-    //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-    //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-    //           {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,1,1,0,0,1,1,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
-    //           {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
-    //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-    //           {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
-    //           {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
+    
 
-    // Mat2i mat{{1,1,1,1,1,1,1},
-    //           {1,1,1,1,1,1,1},
-    //           {1,1,0,0,0,1,1},
-    //           {0,1,1,0,0,1,1},
-    //           {0,0,1,1,0,1,1},
-    //           {0,0,0,1,1,1,1},
-    //           {0,0,0,0,1,1,1}};
+    #ifdef OPENCVDISPLAY
+        std::string name        = "poly";
+        std::string filename    = "../data/" + name + ".txt";
 
-    // fc.mapLoader(mat);
+        Mat2i mat = dataReader(filename);
+        fc.mapLoader(mat);
+        MatDisplay(mat, name + "_origin");
 
+        fc.raster_scan();
+        Mat2i mat2 = fc.getGrid();
+        MatDisplay(mat2, name + "_contour");
+    #else
+        //// A small mat for test.
+        Mat2i mat1{{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                   {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+                   {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+                   {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,1,1,0,0,1,1,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
+                   {0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0},
+                   {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+                   {0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0},
+                   {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}};
 
-    std::string name        = "poly";
-    std::string filename    = "../data/" + name + ".txt";
+        Mat2i mat2{{1,1,1,1,1,1,1},
+                   {1,1,1,1,1,1,1},
+                   {1,1,0,0,0,1,1},
+                   {0,1,1,0,0,1,1},
+                   {0,0,1,1,0,1,1},
+                   {0,0,0,1,1,1,1},
+                   {0,0,0,0,1,1,1}};
 
-    Mat2i mat = dataReader(filename);
-    fc.mapLoader(mat);
-    MatDisplay(mat, name + "_origin");
+        Mat2i mat3{{1,1,1,1,1,1,1},
+                   {0,0,0,0,0,0,0}};
 
-    //// if the image is smaller than 30*30, 
-    //// you can display it in the terminal with the following 'Display()' function.
-    // fc.Display();
+        fc.mapLoader(mat1);
+        fc.Display();
 
-    fc.raster_scan();
-    Mat2i mat2 = fc.getGrid();
-    MatDisplay(mat2, name + "_contour");
-    // fc.Display();
+        fc.raster_scan();
+        fc.Display();
+    #endif
+
     return 0;
 }
