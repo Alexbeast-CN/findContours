@@ -166,11 +166,6 @@ void FindContours::raster_scan(){
                 // Display();
             }
         }
-        // TODO: construct pwh.
-        if (board_type[LNBD] == "out" && board_type[NBD] == "in")
-            int a;
-        else if (board_type[LNBD] == "in" && board_type[NBD] == "out")
-            pwh 
     }
     rm_pad(pad_size);    
 }

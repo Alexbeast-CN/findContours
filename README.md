@@ -124,9 +124,9 @@ void FindContours::board_follow(const p &center, const p &start, bool ClockWise=
 
 <center>
 
-![Input](assets/input1.png)
+![Input](assets/input.png)
 
-![Output](assets/output1.png)
+![Output](assets/output.png)
 
 ![使用 opencv 的结果](assets/result.jpg)
 
@@ -160,6 +160,8 @@ void FindContours::board_follow(const p &center, const p &start, bool ClockWise=
 
 ### 3.3 层级关系
 
+> 这是该算法最难以处理的地方，原论文也无法完全解决所有情况下的带洞多边形层级问题。下面提出论文的思路，以及虽然复杂但可以彻底解决该问题的方案。
+
 对于一些复杂的情况，例如图片中存在多个多边形，则需要对每一个多边形构建清晰的层级关系。首先创建一种数据结构 `pwh (polygon with hole)` 来储存这些带洞的多边形：
 
 ```cpp
@@ -175,36 +177,23 @@ struct pwh{
 };
 ```
 
-为了识别出一张图片中的多个 pwh，我们默认图片本身为第一层 pwh，在代码中表现为 `NBD` 的初始值为 1。随后每找到一个满足 `kernel` 的点，便对 `NBD + 1`，并且每一次寻找新的边界起点之前，都会记录上一层的值 `LNBD`，然后根据 `LNBD` 的类型是 outer 还是 hole 来决定层级关系。之所以可行，是因为对一个 pwh 来说，outer 与 hole 一定是交替出现的。假如遍历过程中，连续出现了两次 outer，那么他们一定是并列关系。
+论文中的解决方案是：为了识别出一张图片中的多个 pwh，我们默认图片本身为第一层 pwh，在代码中表现为 `NBD` 的初始值为 1。随后每找到一个满足 `kernel` 的点，便对 `NBD + 1`，并且每一次寻找新的边界起点之前，都会记录上一层的值 `LNBD`，然后根据 `LNBD` 的类型是 outer 还是 hole 来决定层级关系。之所以可行，是因为对一个 pwh 来说，outer 与 hole 一定是交替出现的。假如遍历过程中，连续出现了两次 outer，那么他们一定是并列关系。由此可以构建出如下图所示的层级关系图。
 
-```cpp
-void FindContours::raster_scan(){
-    for (int i = 0; i < rows; i++){
-        LNBD = 1;
-        for (int j = 0; j < cols; j++){
-            if (abs(grid[i][j]) > 1)
-                LNBD = abs(grid[i][j]);
+<center>
 
-            // find the starting point of the boarder.
-            if (grid[i][j] == 1 && grid[i][j-1] == 0){
-                NBD += 1;
-                std :: cout << "out " << NBD << std::endl;
-                // do the board trace.
-                board_follow(p(i, j), p(i, j-1), false);
-                // Display();
-            }
-            // find the starting point of the hole.
-            else if (grid[i][j] == 1 && grid [i][j+1] == 0){
-                NBD += 1;
-                std :: cout << "in " << NBD << std::endl;
-                board_follow(p(i, j), p(i, j+1), true);
-                // Display();
-            }
-        }
-    }
-    rm_pad(pad_size);    
-}
-```
+![](./assets/paper.png)
+
+</center>
+
+但该算法在如下图所示的情况中，会将 <2, 3, 5, 6> 全部视为 1 的子 pwh。但 6 应该是 3 的子 pwh。
+
+<center>
+
+![](./assets/Case4.png)
+
+</center>
+
+因此，这里最好是先将所有的边界找出来后，然后根据边界是否重叠来判断层级关系。具体操作，需要使用 `CGAL` 几何库中的 `contained ()` 来查看几何图形之间是否互相包含。
 
 ### 3.4 非闭合多边形
 
@@ -221,5 +210,8 @@ void FindContours::board_follow(...){
     }
 }
 ```
+<center>
 
 ![](./assets/Case3.png)
+
+</center>
